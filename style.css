@@ -4,12 +4,17 @@
 :root{
   --ink: #14110F;
   --ink-soft: #221D18;
+  --ink-card: #1D1710;
   --gold: #A9832E;
   --gold-light: #CBA55A;
+  --gold-bright: #D9B45E;
   --bone: #F6F2EA;
   --champagne: #EFE6D3;
+  --cream: #F1E7D4;
+  --cream-muted: rgba(241,231,212,0.68);
   --line: rgba(20,17,15,0.14);
   --line-on-dark: rgba(203,165,90,0.35);
+  --line-gold-soft: rgba(203,165,90,0.18);
   --text-muted: #6B6459;
 
   --serif: 'Cormorant Garamond', Georgia, serif;
@@ -21,8 +26,8 @@ html{ scroll-behavior: smooth; }
 body{
   margin: 0;
   font-family: var(--sans);
-  background: var(--bone);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--cream);
   font-weight: 300;
   -webkit-font-smoothing: antialiased;
 }
@@ -40,51 +45,55 @@ input, textarea, select{ font-family: inherit; }
    ========================================================== */
 .topbar{
   position: sticky; top: 0; z-index: 40;
-  background: var(--bone);
-  border-bottom: 1px solid var(--line);
+  background: var(--ink);
+  border-bottom: 1px solid var(--line-gold-soft);
 }
 .topbar-inner{
   max-width: 1180px;
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   gap: 20px;
 }
 .brand{
   font-family: var(--serif);
-  font-size: 1.5rem;
+  font-style: italic;
+  font-size: 2.1rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  color: var(--gold-bright);
 }
 .search-wrap{ flex: 1; max-width: 420px; }
 .search-input{
   width: 100%;
-  border: 1px solid var(--line);
-  background: transparent;
+  border: 1px solid var(--line-on-dark);
+  background: rgba(241,231,212,0.05);
   padding: 10px 14px;
   font-size: 0.92rem;
-  color: var(--ink);
+  color: var(--cream);
   border-radius: 2px;
 }
+.search-input::placeholder{ color: var(--cream-muted); }
 .search-input:focus{
   outline: none;
-  border-color: var(--gold);
+  border-color: var(--gold-bright);
 }
 .whatsapp-pill{
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--gold-light);
+  color: var(--cream);
   padding: 9px 16px;
   font-size: 0.85rem;
   border-radius: 2px;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.whatsapp-pill:hover{ background: var(--ink); color: var(--bone); }
+.whatsapp-pill:hover{ background: var(--gold); color: var(--ink); border-color: var(--gold); }
 
 /* ==========================================================
    HERO
@@ -133,18 +142,18 @@ input, textarea, select{ font-family: inherit; }
 }
 .cat-chip{
   background: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-on-dark);
   padding: 8px 18px;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: var(--cream-muted);
   border-radius: 999px;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
-.cat-chip:hover{ border-color: var(--gold); color: var(--ink); }
+.cat-chip:hover{ border-color: var(--gold-bright); color: var(--cream); }
 .cat-chip.active{
-  border-color: var(--ink);
+  border-color: var(--gold-bright);
   color: var(--ink);
-  background: var(--champagne);
+  background: var(--gold-light);
 }
 
 /* ==========================================================
@@ -160,8 +169,8 @@ input, textarea, select{ font-family: inherit; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
+  background: var(--line-gold-soft);
+  border: 1px solid var(--line-gold-soft);
 }
 @media (max-width: 900px){
   .product-grid{ grid-template-columns: repeat(2, 1fr); }
@@ -171,7 +180,7 @@ input, textarea, select{ font-family: inherit; }
 }
 
 .product-card{
-  background: var(--bone);
+  background: var(--ink-card);
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -180,7 +189,7 @@ input, textarea, select{ font-family: inherit; }
 .product-card-media{
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  background: var(--champagne);
+  background: var(--ink-soft);
 }
 .product-card-media img{
   width: 100%; height: 100%; object-fit: cover;
@@ -190,7 +199,7 @@ input, textarea, select{ font-family: inherit; }
 .product-card-body{ padding: 18px 20px 22px; }
 .product-card-cat{
   font-size: 0.72rem;
-  color: var(--gold);
+  color: var(--gold-bright);
   margin: 0 0 6px;
   letter-spacing: 0.03em;
 }
@@ -200,16 +209,17 @@ input, textarea, select{ font-family: inherit; }
   font-weight: 500;
   margin: 0 0 6px;
   line-height: 1.25;
+  color: var(--cream);
 }
 .product-card-price{
   font-size: 0.9rem;
-  color: var(--text-muted);
+  color: var(--cream-muted);
   margin: 0;
 }
 
 .empty-state, .loading-state{
   text-align: center;
-  color: var(--text-muted);
+  color: var(--cream-muted);
   padding: 60px 0;
   font-size: 0.95rem;
 }
@@ -229,6 +239,7 @@ input, textarea, select{ font-family: inherit; }
 .modal-backdrop.open{ display: flex; }
 .modal{
   background: var(--bone);
+  color: var(--ink);
   max-width: 640px;
   width: 100%;
   max-height: 90vh;
@@ -351,6 +362,7 @@ input, textarea, select{ font-family: inherit; }
 .admin-backdrop{
   position: fixed; inset: 0;
   background: var(--bone);
+  color: var(--ink);
   display: none;
   z-index: 90;
   overflow-y: auto;
@@ -410,11 +422,11 @@ input, textarea, select{ font-family: inherit; }
    ========================================================== */
 .enquiry-btn{
   position: relative;
-  background: none; border: 1px solid var(--line);
-  padding: 9px 11px; border-radius: 2px; color: var(--ink);
+  background: none; border: 1px solid var(--line-on-dark);
+  padding: 9px 11px; border-radius: 2px; color: var(--cream);
   display: flex; align-items: center; justify-content: center;
 }
-.enquiry-btn:hover{ border-color: var(--ink); }
+.enquiry-btn:hover{ border-color: var(--gold-bright); }
 .enquiry-count{
   position: absolute; top: -7px; right: -7px;
   background: var(--gold); color: var(--ink);
@@ -515,6 +527,40 @@ input, textarea, select{ font-family: inherit; }
 .enquiry-row-info .meta{ font-size: 0.8rem; color: var(--text-muted); }
 .remove-btn{ background: none; border: none; font-size: 1.3rem; color: var(--text-muted); line-height: 1; }
 .enquiry-footer{ display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 10px; }
+
+/* ==========================================================
+   PRODUCT MODAL + ENQUIRY DRAWER — dark premium theme
+   (customer-facing, so they match the rest of the storefront;
+   admin/login modals stay on the light functional theme)
+   ========================================================== */
+#productModalBackdrop .modal,
+#enquiryBackdrop .modal{
+  background: var(--ink-card);
+  color: var(--cream);
+}
+#productModalBackdrop .modal-close,
+#enquiryBackdrop .modal-close{ color: var(--cream); }
+#productModalBackdrop .product-modal-media,
+#productModalBackdrop .pm-main-media{ background: var(--ink-soft); }
+#productModalBackdrop .pm-price{ color: var(--cream); }
+#productModalBackdrop .pm-desc{ color: var(--cream-muted); }
+#productModalBackdrop .pm-related{ border-top: 1px solid var(--line-gold-soft); }
+#productModalBackdrop .pm-related-card img{ background: var(--ink-soft); }
+#productModalBackdrop .pm-related-card p{ color: var(--cream-muted); }
+#productModalBackdrop .pm-thumb{ background: var(--ink-soft); }
+#productModalBackdrop .pm-thumb-video{ background: var(--ink-soft); color: var(--cream); }
+#productModalBackdrop .btn-outline{ border-color: var(--gold-light); color: var(--cream); }
+#productModalBackdrop .btn-outline:hover{ background: var(--gold-light); color: var(--ink); }
+
+#enquiryBackdrop .login-sub{ color: var(--cream-muted); }
+#enquiryBackdrop .enquiry-row{ border-bottom: 1px solid var(--line-gold-soft); }
+#enquiryBackdrop .enquiry-row img{ background: var(--ink-soft); }
+#enquiryBackdrop .enquiry-row-info .meta{ color: var(--cream-muted); }
+#enquiryBackdrop .remove-btn{ color: var(--cream-muted); }
+#enquiryBackdrop .empty-state{ color: var(--cream-muted); }
+#enquiryBackdrop .btn-ghost{ border-color: var(--line-on-dark); color: var(--cream); }
+#enquiryBackdrop .btn-ghost:hover{ border-color: var(--gold-bright); }
+
 
 /* ==========================================================
    ADMIN AUTH MODALS
