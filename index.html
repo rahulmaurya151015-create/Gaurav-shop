@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Aabhira Jewels</title>
+<title>Sree Shiv Alankar Mandir</title>
 <meta name="description" content="Handcrafted jewelry, made to be worn." />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
 <!-- ============ TOP BAR ============ -->
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand" id="brandName">Aabhira Jewels</div>
+    <div class="brand" id="brandName">Sree Shiv Alankar Mandir</div>
 
     <div class="search-wrap">
       <input type="text" id="searchInput" class="search-input" placeholder="Search jewelry, or press Enter…" autocomplete="off" />
@@ -118,7 +118,7 @@
 <footer class="site-footer">
   <div class="footer-inner">
     <div>
-      <div class="brand" id="footerBrand">Aabhira Jewels</div>
+      <div class="brand" id="footerBrand">Sree Shiv Alankar Mandir</div>
       <p id="footerTagline">Made by hand. Worn for years.</p>
       <p id="footerAddress"></p>
     </div>
@@ -127,7 +127,7 @@
       <a id="whatsappFooter" href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
     </div>
   </div>
-  <p class="footer-note">&copy; <span id="year"></span> <span id="footerBrand2">Aabhira Jewels</span>. All rights reserved.</p>
+  <p class="footer-note">&copy; <span id="year"></span> <span id="footerBrand2">Sree Shiv Alankar Mandir</span>. All rights reserved.</p>
 </footer>
 
 <!-- ============ ADMIN: STEP 1 — EMAIL SIGN-IN ============ -->
@@ -135,7 +135,7 @@
   <div class="modal login-modal">
     <button class="modal-close" id="googleLoginClose" aria-label="Close">&times;</button>
     <h2>Admin sign-in</h2>
-    <p class="login-sub">Step 1 of 2 — sign in with your admin email.</p>
+    <p class="login-sub">Sign in with your admin email.</p>
     <form id="emailLoginForm">
       <label>Email
         <input type="email" id="emailLoginEmail" required autocomplete="username" />
@@ -145,22 +145,6 @@
       </label>
       <p class="login-error" id="googleLoginError" hidden></p>
       <button type="submit" class="btn-primary" id="emailLoginSubmit">Continue</button>
-    </form>
-  </div>
-</div>
-
-<!-- ============ ADMIN: STEP 2 — PANEL PASSWORD ============ -->
-<div class="modal-backdrop" id="panelPasswordBackdrop">
-  <div class="modal login-modal">
-    <button class="modal-close" id="panelPasswordClose" aria-label="Close">&times;</button>
-    <h2>Admin sign-in</h2>
-    <p class="login-sub" id="panelPasswordSub">Step 2 of 2 — enter the panel password.</p>
-    <form id="panelPasswordForm">
-      <label>Panel password
-        <input type="password" id="panelPasswordInput" required autocomplete="off" />
-      </label>
-      <p class="login-error" id="panelPasswordError" hidden></p>
-      <button type="submit" class="btn-primary" id="panelPasswordSubmit">Unlock admin panel</button>
     </form>
   </div>
 </div>
@@ -246,19 +230,31 @@
       <p class="tab-hint">People who can sign in with an email + password below. To add or remove someone's login, it has to be done once from the Firebase console (Authentication → Users) — this list here is just a record of who currently has access.</p>
       <div class="access-list" id="accessEmailList"></div>
 
-      <hr class="divider" />
+      <div id="devVideoSection" hidden>
+        <hr class="divider" />
 
-      <h3>Panel password</h3>
-      <p class="tab-hint">This is the extra step asked after signing in. Change it any time — this part IS fully self-service.</p>
-      <form id="changePasswordForm" class="inline-add-form">
-        <input type="password" id="newPanelPassword" placeholder="New panel password" required />
-        <button type="submit" class="btn-primary">Update</button>
-      </form>
-      <p class="save-msg" id="accessSaveMsg" hidden>Saved.</p>
+        <h3>Sign-in welcome video</h3>
+        <p class="tab-hint">Plays automatically with sound the moment anyone signs in successfully — before the panel opens. Keep it short (a few seconds, a couple MB) so it doesn't slow things down.</p>
+        <div class="edit-video-row" id="settingsVideoRow" hidden>
+          <span id="settingsVideoLabel">Video attached ✓</span>
+          <button type="button" class="btn-ghost" id="removeSettingsVideoBtn">Remove</button>
+        </div>
+        <label>Upload / replace video
+          <input type="file" id="settingsVideoFile" accept="video/*" />
+        </label>
+        <p class="upload-progress" id="settingsVideoProgress" hidden></p>
+        <p class="save-msg" id="accessSaveMsg" hidden>Saved.</p>
+      </div>
     </section>
 
     <p class="admin-credit">This website is designed and developed by Rahul Maurya</p>
   </div>
+</div>
+
+<!-- ============ ADMIN SIGN-IN WELCOME VIDEO OVERLAY ============ -->
+<div class="video-overlay-backdrop" id="welcomeVideoBackdrop">
+  <video id="welcomeVideoEl" playsinline preload="auto"></video>
+  <button class="btn-ghost tap-to-play-btn" id="tapToPlayBtn" hidden>Tap to play</button>
 </div>
 
 <!-- PRODUCT EDIT MODAL -->

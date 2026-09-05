@@ -1,4 +1,4 @@
-# Aabhira Jewels — Website Setup Guide (Hinglish)
+# Sree Shiv Alankar Mandir — Website Setup Guide (Hinglish)
 
 Plain HTML/CSS/JS website — koi build tool, npm install nahi chahiye. Do free services use ho rahi hain:
 
@@ -9,16 +9,15 @@ Plain HTML/CSS/JS website — koi build tool, npm install nahi chahiye. Do free 
 
 ---
 
-## Kaise access hota hai (poora security model samajh lo)
+## Kaise access hota hai
 
-> **Note:** Shuru me humne "Sign in with Google" (OAuth) try kiya tha, lekin kai mobile/tablet browsers me yeh redirect reliably kaam nahi karta (browser ki privacy settings login ka result "bhool" jaati hain). Isliye ab hum seedha **email + password login** use kar rahe hain — yeh har device pe 100% reliably kaam karta hai.
+> **Note:** Shuru me "Sign in with Google" (OAuth) try kiya tha, lekin kai mobile/tablet browsers me yeh redirect reliably kaam nahi karta. Isliye ab **email + password login** use ho raha hai — har device pe 100% reliably kaam karta hai.
 
 1. Website ke search bar me secret phrase daalo → login screen khulti hai
-2. **Step 1:** apna admin email + password daalo (yeh Firebase me tumne/maine manually banaya hoga — tumhare **asli Gmail password se alag** hai, sirf isi website ke liye hai)
-3. **Step 2:** ek chhota panel password daalo (extra layer)
-4. Dono sahi hone pe hi admin panel khulta hai
+2. Apna admin email + password daalo (yeh Firebase me manually banaya gaya hai — tumhare **asli Gmail password se alag** hai, sirf isi website ke liye hai)
+3. Sahi hote hi — agar sign-in welcome video set hai to woh pehle turant sound ke saath play hoga, khatam hote hi admin panel khul jaata hai
 
-Asli security yeh hai: **sirf wahi log login kar sakte hain jinke liye humne khud Firebase console me account banaya hai** — koi bhi random insaan apna email/password bana ke andar nahi ghus sakta, website pe kahin "sign up" ka option hai hi nahi.
+Asli security yeh hai: **sirf wahi log login kar sakte hain jinke liye humne khud Firebase console me account banaya hai** — website pe kahin "sign up" ka option hai hi nahi, koi bhi random insaan andar nahi ghus sakta.
 
 ---
 
@@ -45,27 +44,23 @@ Asli security yeh hai: **sirf wahi log login kar sakte hain jinke liye humne khu
 4. **Signing Mode = "Unsigned"** karo (zaroori) → Save.
 5. Cloud name aur preset naam `firebase-config.js` me `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_UPLOAD_PRESET` ki jagah daal do.
 
-## Step 5 — Admin login accounts banao (zaroori security step)
+## Step 5 — Admin login accounts banao
 
-Yeh step Firebase console me karna hai — website se nahi (security ke liye zaroori hai):
+Firebase console me (website se nahi — security ke liye jaan-boojh kar):
 
-1. Firebase console → **Authentication** → **Users** tab → **"Add user"**
-2. Har admin (tum, friend, koi bhi recovery account) ke liye:
-   - **Email:** unka Gmail address (jaise `friend@gmail.com`)
-   - **Password:** koi bhi strong password chuno — **yeh unke Google account ka password nahi hai**, sirf isi website ke liye ek naya password hai. Unhe yeh password bata dena.
-3. Repeat karo har admin ke liye
+1. **Authentication** → **Users** tab → **"Add user"**
+2. Har admin ke liye: **Email** (unka Gmail) + **Password** (naya password chuno, unka asli Google password nahi) → Add
+3. Repeat har admin ke liye
 
-**Naya admin baad me add karna ho:** wapas isi jagah (Authentication → Users → Add user) — 2 minute ka kaam hai, website se nahi hota (jaan-boojh kar, security ke liye).
+**Naya admin baad me add karna ho:** yahi jagah — 2 minute ka kaam, website se nahi hota (jaan-boojh kar security ke liye).
 
-## Step 6 — Pehla Firestore document banao (panel password + record ke liye)
+## Step 6 — Firestore document banao (access record ke liye)
 
 1. **Firestore Database → Data tab** → "Start collection" → Collection ID: `config` → Next
-2. Document ID: `admins`. Do fields banao:
-   - `emails` → type **array** → sabhi admin emails daal do (sirf record/display ke liye, yeh access control nahi karta — asli control Step 5 wale Users list se hota hai)
-   - `panelPassword` → type **string** → koi bhi shuruaati password (baad me admin panel se change ho sakta hai)
+2. Document ID: `admins`. Field banao: `emails` → type **array** → sabhi admin emails daal do (sirf record/display ke liye)
 3. Ek aur document banao usi `config` collection me — Document ID: `settings` (khaali chhod sakte ho)
 
-## Step 7 — Security rules laga do (zaroori)
+## Step 7 — Security rules laga do
 
 Firestore Database → **Rules tab** me yeh paste karo → **Publish**:
 
@@ -76,7 +71,11 @@ service cloud.firestore {
 
     match /config/settings {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null &&
+        (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['welcomeVideoUrl'])
+          || request.auth.token.email == 'rahulmaurya151015@gmail.com'
+        );
     }
 
     match /config/admins {
@@ -91,35 +90,42 @@ service cloud.firestore {
 }
 ```
 
-Matlab: koi bhi products dekh sakta hai, lekin sirf woh log jo Step 5 me signed-in hain (matlab jinke liye humne Firebase Users me account banaya) hi data change kar sakte hain.
+Yeh rule ka matlab: koi bhi admin shop settings (naam, WhatsApp, categories, etc.) badal sakta hai — lekin agar koi write `welcomeVideoUrl` field ko chhoo rahi hai, to **sirf `rahulmaurya151015@gmail.com`** allowed hai. Kisi aur admin account se try karo (chahe website ke code ko dekh ke seedha Firestore ko call bhi kare), yeh reject ho jayega — asli lock database ke level pe hai, sirf UI me chhupaya hua nahi.
 
-## Step 8 — Website ko live karo (free hosting)
+## Step 8 — Website ko live karo
 
-GitHub + Netlify (jo tumne already kar liya hai) — koi terminal nahi chahiye, tablet se hi ho jaata hai. Naye updates ke liye bas GitHub pe file re-upload karo, Netlify khud rebuild kar dega.
+GitHub + Netlify (jo tumne already kar liya hai). Naye updates ke liye bas GitHub pe file re-upload karo, Netlify khud rebuild kar dega.
 
 ---
 
 ## Roz ka use — admin panel kaise khulega
 
 1. Search bar me `shop admin` type karke Enter (yeh phrase `app.js` ki pehli line se badal sakte ho)
-2. Apna admin **email + password** daalo (Step 5 wala)
-3. Panel password daalo
-4. Andar se:
+2. Apna admin **email + password** daalo
+3. Andar se:
    - **Products** → add/edit/delete, multiple photos + ek video per product
    - **Home banners** → home page ke upar slider ke liye images add/remove
    - **Shop settings** → naam, tagline, address, WhatsApp number, categories
-   - **Admin access** → yahan sirf list dikhti hai kiske paas access hai; naya add/remove karna ho to Firebase console (Step 5) me karna hoga. Panel password yahan se change ho sakta hai.
-5. Kaam ho jaaye to **"Sign out"**
+   - **Admin access** → kiske paas access hai uski list (record ke liye), aur yahin se **sign-in welcome video** upload/remove hoti hai
+4. Kaam ho jaaye to **"Sign out"**
+
+## Sign-in welcome video
+
+Admin panel → **Admin access** tab → "Sign-in welcome video" me ek video upload kar do (chhota rakhna, 5-10 second, few MB — jitna halka utna better). Login screen khulte hi video background me load hona shuru ho jaati hai (customer ko yeh kabhi load nahi hoti — sirf tab jab koi admin login screen khole), isliye login hote hi turant, bina wait ke play ho jaati hai. Video poori dekhni zaroori hai — **koi skip button nahi hai**, khatam hone ke baad hi admin panel khulta hai. Agar kabhi browser sound-autoplay block kare (rare), ek "Tap to play" button aata hai — usse video sound ke saath shuru hoti hai, phir bhi poori dekhni padegi.
+
+> **Sirf tumhare liye:** Yeh control sirf `rahulmaurya151015@gmail.com` se login karne pe dikhta hai — shop owner ka account (ya koi aur admin) is section ko dekh hi nahi sakta, upload/change/remove to door ki baat. Yeh sirf website me chhupaya nahi gaya — Step 7 ki security rules me database level pe bhi lock hai.
+
+## Shop by category (image tiles)
+
+Home page pe categories ki photo-tiles apne aap ban jaati hain — jo bhi pehla product kisi category me add hoga, uski photo tile ban jaayegi. Koi extra kaam nahi karna.
 
 ## Enquiry list (cart jaisa, bina payment ke)
 
-Customer kai products "Add to enquiry list" se select kar sakta hai, phir top ke bag icon se ek hi WhatsApp message me sab bhej sakta hai. **Payment kahin nahi hai** — yeh sirf ek shuruaati message hai, order/payment counter pe hi hoga.
+Customer kai products "Add to enquiry list" se select kar sakta hai, phir top ke bag icon se ek hi WhatsApp message me sab bhej sakta hai. **Payment kahin nahi hai** — order/payment counter pe hi hoga.
 
 ## Copyright/footer
 
-Footer me automatic dikhta hai: `© [current year] [Shop name]. All rights reserved.` — saal khud-ba-khud update hota rahega. Shop ka naam aur address "Shop settings" se aata hai.
-
-> **Trademark (™):** jaan-boojh kar nahi lagaya — sirf tabhi lagana sahi hai jab naam/logo registered ho. Register karaya ho to bata dena, add kar dunga.
+Footer me automatic: `© [saal] [Shop name]. All rights reserved.` — saal khud update hota hai. Shop naam/address "Shop settings" se aata hai.
 
 ## Yeh site light kyu hai
 

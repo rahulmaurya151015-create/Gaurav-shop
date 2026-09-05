@@ -5,6 +5,10 @@
    ===================================================================== */
 const ADMIN_TRIGGER = "shop admin";
 
+// Only this exact email can see/change the sign-in welcome video —
+// every other admin (including the shop owner) never sees this control.
+const DEVELOPER_EMAIL = "rahulmaurya151015@gmail.com";
+
 /* ===================================================================== */
 
 const db = firebase.firestore();
@@ -15,7 +19,7 @@ const ADMINS_DOC = db.collection("config").doc("admins");
 const PRODUCTS_COL = db.collection("products");
 
 const DEFAULT_SETTINGS = {
-  shopName: "Aabhira Jewels",
+  shopName: "Sree Shiv Alankar Mandir",
   heroKicker: "Handcrafted, close to home",
   heroTitle: "Jewelry that carries\na story worth telling.",
   heroSub: "Every piece below is in stock and ready to be seen in person. Tap anything that catches your eye.",
@@ -24,7 +28,8 @@ const DEFAULT_SETTINGS = {
   location: "Visit or write to us",
   whatsapp: "",
   categories: "Rings,Necklaces,Earrings,Bangles",
-  banners: []
+  banners: [],
+  welcomeVideoUrl: ""
 };
 
 let currentSettings = { ...DEFAULT_SETTINGS };
@@ -33,8 +38,7 @@ let activeCategory = "all";
 
 let isAdmin = false;              // true only after BOTH Google check + panel password pass this session
 let verifiedAdminEmail = null;    // email confirmed to be in the allow-list, awaiting password
-let currentAdminData = null;      // { emails, panelPassword }
-let passwordAttempts = 0;
+let currentAdminData = null;      // { emails } — informational only now
 
 let enquiryIds = [];              // product ids, persisted in localStorage
 let currentModalProductId = null;
@@ -409,12 +413,12 @@ $("searchInput").addEventListener("keydown", (e) => {
     e.target.value = "";
     renderProducts();
     if (isAdmin){ openBackdrop($("adminBackdrop")); }
-    else { openBackdrop($("googleLoginBackdrop")); }
+    else { openBackdrop($("googleLoginBackdrop")); preloadWelcomeVideo(); }
   }
 });
 
 /* ---------------------------------------------------------------------
-   ADMIN AUTH — STEP 1: email + password sign-in
+   ADMIN AUTH — email + password sign-in
    --------------------------------------------------------------------- */
 $("googleLoginClose").onclick = () => closeBackdrop($("googleLoginBackdrop"));
 
@@ -428,13 +432,12 @@ $("emailLoginForm").addEventListener("submit", async (e) => {
   try{
     await auth.signInWithEmailAndPassword(email, pass);
     const snap = await ADMINS_DOC.get();
-    currentAdminData = snap.exists ? snap.data() : { emails: [], panelPassword: "" };
+    currentAdminData = snap.exists ? snap.data() : { emails: [] };
     verifiedAdminEmail = email;
-    passwordAttempts = 0;
+    isAdmin = true;
     $("emailLoginForm").reset();
     closeBackdrop($("googleLoginBackdrop"));
-    $("panelPasswordSub").textContent = `Step 2 of 2 — signed in as ${email}. Enter the panel password.`;
-    openBackdrop($("panelPasswordBackdrop"));
+    playWelcomeVideoThenOpenPanel();
   } catch(err){
     console.error(err);
     await auth.signOut();
@@ -447,37 +450,52 @@ $("emailLoginForm").addEventListener("submit", async (e) => {
 });
 
 /* ---------------------------------------------------------------------
-   ADMIN AUTH — STEP 2: panel password
+   SIGN-IN WELCOME VIDEO — mandatory watch, with sound, right after a
+   successful login, then hands off to the admin panel. Preloaded as
+   soon as the login screen opens so it starts instantly.
    --------------------------------------------------------------------- */
-$("panelPasswordClose").onclick = async () => {
-  closeBackdrop($("panelPasswordBackdrop"));
-  await auth.signOut();
-  verifiedAdminEmail = null;
-};
+function preloadWelcomeVideo(){
+  const url = currentSettings.welcomeVideoUrl;
+  const videoEl = $("welcomeVideoEl");
+  if (!url || videoEl.src === url) return;
+  videoEl.src = url;
+  videoEl.load();
+}
 
-$("panelPasswordForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const entered = $("panelPasswordInput").value;
-  $("panelPasswordError").hidden = true;
+function playWelcomeVideoThenOpenPanel(){
+  const url = currentSettings.welcomeVideoUrl;
+  if (!url){ enterAdminPanel(); return; }
 
-  if (passwordAttempts >= 5){
-    $("panelPasswordError").textContent = "Too many attempts. Close this and try again later.";
-    $("panelPasswordError").hidden = false;
-    return;
-  }
-
-  if (entered === currentAdminData.panelPassword){
-    isAdmin = true;
-    sessionStorage.setItem("panel_unlocked", "1");
-    $("panelPasswordForm").reset();
-    closeBackdrop($("panelPasswordBackdrop"));
+  const backdrop = $("welcomeVideoBackdrop");
+  const videoEl = $("welcomeVideoEl");
+  const tapBtn = $("tapToPlayBtn");
+  let handed = false;
+  const handOff = () => {
+    if (handed) return;
+    handed = true;
+    videoEl.pause();
+    closeBackdrop(backdrop);
     enterAdminPanel();
-  } else {
-    passwordAttempts++;
-    $("panelPasswordError").textContent = "Wrong password. Try again.";
-    $("panelPasswordError").hidden = false;
-  }
-});
+  };
+
+  if (videoEl.src !== url) videoEl.src = url; // fallback if preload never ran
+  videoEl.muted = false;
+  videoEl.currentTime = 0;
+  tapBtn.hidden = true;
+  openBackdrop(backdrop);
+  videoEl.onended = handOff; // the ONLY way forward — no skip
+
+  videoEl.play().catch(() => {
+    // The browser blocked sound-autoplay this one time — a direct tap
+    // is always allowed to play with sound. This starts the mandatory
+    // video; it still has to finish before the panel opens.
+    tapBtn.hidden = false;
+    tapBtn.onclick = () => {
+      tapBtn.hidden = true;
+      videoEl.play();
+    };
+  });
+}
 
 function enterAdminPanel(){
   $("adminWhoami").textContent = verifiedAdminEmail || "";
@@ -486,20 +504,21 @@ function enterAdminPanel(){
   renderAdminProductList();
   renderAdminBannerList();
   renderAccessList();
+  renderSettingsVideoRow();
+  $("devVideoSection").hidden = (verifiedAdminEmail || "").toLowerCase() !== DEVELOPER_EMAIL;
 }
 
 $("adminLogoutBtn").onclick = async () => {
   isAdmin = false;
   verifiedAdminEmail = null;
-  sessionStorage.removeItem("panel_unlocked");
   await auth.signOut();
   closeBackdrop($("adminBackdrop"));
 };
 $("adminCloseBtn").onclick = () => closeBackdrop($("adminBackdrop"));
 
 auth.onAuthStateChanged(user => {
-  // A silent Google session alone never opens the panel — the
-  // secret phrase + panel password are still required every time.
+  // A silent session alone never opens the panel — the secret
+  // phrase + email/password sign-in are still required every time.
   if (!user){ isAdmin = false; verifiedAdminEmail = null; }
 });
 
@@ -619,19 +638,40 @@ function renderAccessList(){
     : `<p class="tab-hint">No emails on record yet.</p>`;
 }
 
-$("changePasswordForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const newPass = $("newPanelPassword").value;
-  if (!newPass || newPass.length < 4){
-    alert("Choose a password at least 4 characters long.");
-    return;
+function renderSettingsVideoRow(){
+  $("settingsVideoRow").hidden = !currentSettings.welcomeVideoUrl;
+}
+
+$("settingsVideoFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const progress = $("settingsVideoProgress");
+  progress.hidden = false;
+  progress.textContent = "Uploading video… 0%";
+  try{
+    const url = await uploadToCloudinary(file, "video", (pct) => {
+      progress.textContent = `Uploading video… ${pct}%`;
+    });
+    await SETTINGS_DOC.set({ welcomeVideoUrl: url }, { merge: true });
+    currentSettings.welcomeVideoUrl = url;
+    renderSettingsVideoRow();
+    progress.hidden = true;
+    $("accessSaveMsg").hidden = false;
+    setTimeout(() => { $("accessSaveMsg").hidden = true; }, 2000);
+  } catch(err){
+    console.error(err);
+    progress.textContent = "Upload failed — try again.";
+  } finally {
+    e.target.value = "";
   }
-  await ADMINS_DOC.update({ panelPassword: newPass });
-  currentAdminData.panelPassword = newPass;
-  $("changePasswordForm").reset();
-  $("accessSaveMsg").hidden = false;
-  setTimeout(() => { $("accessSaveMsg").hidden = true; }, 2000);
 });
+
+$("removeSettingsVideoBtn").onclick = async () => {
+  if (!confirm("Remove the sign-in welcome video?")) return;
+  await SETTINGS_DOC.set({ welcomeVideoUrl: "" }, { merge: true });
+  currentSettings.welcomeVideoUrl = "";
+  renderSettingsVideoRow();
+};
 
 /* ---------------------------------------------------------------------
    ADMIN: PRODUCT LIST
