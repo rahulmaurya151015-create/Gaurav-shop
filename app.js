@@ -382,13 +382,22 @@ $("searchInput").addEventListener("keydown", (e) => {
    --------------------------------------------------------------------- */
 $("googleLoginClose").onclick = () => closeBackdrop($("googleLoginBackdrop"));
 
-$("googleSignInBtn").onclick = async () => {
-  $("googleLoginError").hidden = true;
-  $("googleSignInBtn").disabled = true;
-  try{
-    const result = await auth.signInWithPopup(googleProvider);
-    const email = result.user.email;
+// Popups are unreliable on mobile/tablet browsers (often silently
+// blocked), so we use a full-page redirect instead: tapping the
+// button sends the browser to Google, then back to this same page.
+$("googleSignInBtn").onclick = () => {
+  sessionStorage.setItem("admin_login_in_progress", "1");
+  auth.signInWithRedirect(googleProvider);
+};
 
+async function handleRedirectResult(){
+  if (sessionStorage.getItem("admin_login_in_progress") !== "1") return;
+  try{
+    const result = await auth.getRedirectResult();
+    if (!result || !result.user) return; // page loaded normally, not a redirect return
+    sessionStorage.removeItem("admin_login_in_progress");
+
+    const email = result.user.email;
     // Try to read the admins doc — Firestore rules only allow this
     // if this exact email is already in the allow-list.
     const snap = await ADMINS_DOC.get();
@@ -404,13 +413,13 @@ $("googleSignInBtn").onclick = async () => {
     openBackdrop($("panelPasswordBackdrop"));
   } catch(err){
     console.error(err);
+    sessionStorage.removeItem("admin_login_in_progress");
     await auth.signOut();
+    openBackdrop($("googleLoginBackdrop"));
     $("googleLoginError").textContent = "This Google account isn't allowed to manage this shop.";
     $("googleLoginError").hidden = false;
-  } finally {
-    $("googleSignInBtn").disabled = false;
   }
-};
+}
 
 /* ---------------------------------------------------------------------
    ADMIN AUTH — STEP 2: panel password
@@ -809,3 +818,4 @@ $("deleteProductBtn").onclick = async () => {
 $("year").textContent = new Date().getFullYear();
 loadEnquiry();
 loadSettings().then(subscribeProducts);
+handleRedirectResult();
