@@ -120,6 +120,42 @@ function renderCategoryChips(){
     sel.innerHTML = cats.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("");
     if (cats.includes(current)) sel.value = current;
   }
+  renderCategoryShowcase();
+}
+
+/* ---------------------------------------------------------------------
+   SHOP BY CATEGORY — image tiles (PC Chandra-style), auto-built from
+   whichever product photo represents each category, no extra admin work
+   --------------------------------------------------------------------- */
+function renderCategoryShowcase(){
+  const cats = (currentSettings.categories || "").split(",").map(c => c.trim()).filter(Boolean);
+  const wrap = $("catShowcaseWrap");
+  const grid = $("catShowcaseGrid");
+  if (!wrap || !grid) return;
+
+  const tiles = cats
+    .map(cat => {
+      const rep = allProducts.find(p => p.category === cat && p.images && p.images.length);
+      return rep ? { cat, img: rep.images[0] } : null;
+    })
+    .filter(Boolean);
+
+  if (!tiles.length){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  grid.innerHTML = tiles.map(t => `
+    <button class="cat-tile" data-cat="${escapeAttr(t.cat)}">
+      <span class="cat-tile-media"><img src="${escapeAttr(t.img)}" alt="${escapeAttr(t.cat)}" loading="lazy" /></span>
+      <span class="cat-tile-label">${escapeHtml(t.cat)}</span>
+    </button>
+  `).join("");
+  grid.querySelectorAll(".cat-tile").forEach(btn => {
+    btn.onclick = () => {
+      activeCategory = btn.dataset.cat;
+      renderCategoryChips();
+      renderProducts();
+      $("productGrid").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  });
 }
 
 /* ---------------------------------------------------------------------
@@ -172,6 +208,7 @@ function subscribeProducts(){
     renderProducts();
     renderAdminProductList();
     renderEnquiry();
+    renderCategoryShowcase();
   }, err => {
     console.error(err);
     $("loadingState").textContent = "Couldn't load products right now.";

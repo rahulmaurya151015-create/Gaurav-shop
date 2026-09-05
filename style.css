@@ -17,6 +17,10 @@
   --line-gold-soft: rgba(203,165,90,0.18);
   --text-muted: #6B6459;
 
+  --maroon: #55111C;
+  --maroon-deep: #3A0B13;
+  --line-on-maroon: rgba(217,180,94,0.3);
+
   --serif: 'Cormorant Garamond', Georgia, serif;
   --sans: 'Jost', -apple-system, BlinkMacSystemFont, sans-serif;
 }
@@ -127,6 +131,50 @@ input, textarea, select{ font-family: inherit; }
   max-width: 46ch;
   margin: 0;
   font-weight: 300;
+}
+
+/* ==========================================================
+   SHOP BY CATEGORY — image tiles
+   ========================================================== */
+.cat-showcase-wrap{
+  max-width: 1180px;
+  margin: 48px auto 0;
+  padding: 0 24px;
+}
+.cat-showcase-title{
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  margin: 0 0 18px;
+}
+.cat-showcase-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 700px){
+  .cat-showcase-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+.cat-tile{
+  background: var(--ink-card);
+  border: 1px solid var(--line-gold-soft);
+  border-radius: 4px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.cat-tile:hover{ border-color: var(--gold-bright); transform: translateY(-2px); }
+.cat-tile-media{ display: block; aspect-ratio: 1/1; overflow: hidden; background: var(--ink-soft); }
+.cat-tile-media img{ width: 100%; height: 100%; object-fit: cover; }
+.cat-tile-label{
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--cream);
+  padding: 10px 14px 14px;
 }
 
 /* ==========================================================
@@ -297,29 +345,29 @@ input, textarea, select{ font-family: inherit; }
    FOOTER
    ========================================================== */
 .site-footer{
-  background: var(--ink);
-  color: rgba(246,242,234,0.85);
+  background: linear-gradient(180deg, var(--maroon) 0%, var(--maroon-deep) 100%);
+  color: rgba(241,231,212,0.9);
   padding: 56px 24px 28px;
 }
 .footer-inner{
   max-width: 1180px; margin: 0 auto;
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px;
-  border-bottom: 1px solid var(--line-on-dark);
+  border-bottom: 1px solid var(--line-on-maroon);
   padding-bottom: 32px;
 }
-.site-footer .brand{ color: var(--bone); }
-.site-footer p{ font-size: 0.9rem; color: rgba(246,242,234,0.6); margin: 6px 0 0; }
+.site-footer .brand{ color: var(--gold-bright); font-style: italic; }
+.site-footer p{ font-size: 0.9rem; color: rgba(241,231,212,0.72); margin: 6px 0 0; }
 .footer-contact{ text-align: right; }
 .footer-contact a{
   display: inline-block;
   margin-top: 10px;
   font-size: 0.9rem;
-  color: var(--gold-light);
-  border-bottom: 1px solid var(--gold-light);
+  color: var(--gold-bright);
+  border-bottom: 1px solid var(--gold-bright);
 }
 .footer-note{
   max-width: 1180px; margin: 20px auto 0;
-  font-size: 0.78rem; color: rgba(246,242,234,0.4);
+  font-size: 0.78rem; color: rgba(241,231,212,0.45);
 }
 
 /* ==========================================================
@@ -406,6 +454,14 @@ input, textarea, select{ font-family: inherit; }
 .admin-row button:hover{ border-color: var(--ink); }
 
 .save-msg{ color: #2A6B3F; font-size: 0.85rem; margin: -6px 0 14px; }
+.admin-credit{
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 48px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
 
 /* product edit modal */
 .product-edit-modal{ max-width: 480px; padding: 30px 30px 34px; }
