@@ -11,15 +11,14 @@ Plain HTML/CSS/JS website — koi build tool, npm install nahi chahiye. Do free 
 
 ## Kaise access hota hai (poora security model samajh lo)
 
-Yeh website **tumhare** Google account se bane Firebase project pe chalti hai — poora control tumhare paas rahega. Friend (ya koi bhi admin) ka access alag tarike se milta hai:
+> **Note:** Shuru me humne "Sign in with Google" (OAuth) try kiya tha, lekin kai mobile/tablet browsers me yeh redirect reliably kaam nahi karta (browser ki privacy settings login ka result "bhool" jaati hain). Isliye ab hum seedha **email + password login** use kar rahe hain — yeh har device pe 100% reliably kaam karta hai.
 
 1. Website ke search bar me secret phrase daalo → login screen khulti hai
-2. **Step 1:** apne Google account se sign in karo
-3. Sirf woh Google account jo tumne pehle se "allowed list" me daala hai — usi ko aage jaane diya jaata hai. Baaki koi bhi Google account try kare, turant "not authorized" dikhega
-4. **Step 2:** ek chhota panel password daalo (extra layer)
-5. Dono pass hone pe hi admin panel khulta hai
+2. **Step 1:** apna admin email + password daalo (yeh Firebase me tumne/maine manually banaya hoga — tumhare **asli Gmail password se alag** hai, sirf isi website ke liye hai)
+3. **Step 2:** ek chhota panel password daalo (extra layer)
+4. Dono sahi hone pe hi admin panel khulta hai
 
-Asli security **allowed list** pe hai, panel password sirf ek extra hurdle hai — is se koi bhi random Google account, chahe usko panel password pata bhi ho, andar nahi jaa sakta.
+Asli security yeh hai: **sirf wahi log login kar sakte hain jinke liye humne khud Firebase console me account banaya hai** — koi bhi random insaan apna email/password bana ke andar nahi ghus sakta, website pe kahin "sign up" ka option hai hi nahi.
 
 ---
 
@@ -31,7 +30,7 @@ Asli security **allowed list** pe hai, panel password sirf ek extra hurdle hai �
 
 **Build** section me:
 1. **Firestore Database** → Create database → production mode → region `asia-south1` (ya paas wala) → Enable.
-2. **Authentication** → Get started → Sign-in method tab → **Google** provider ko enable karo (Email/Password ki zaroorat nahi ab).
+2. **Authentication** → Get started → Sign-in method tab → **"Email/Password"** provider ko enable karo.
 
 ## Step 3 — Website ko apni Firebase keys do
 
@@ -44,22 +43,29 @@ Asli security **allowed list** pe hai, panel password sirf ek extra hurdle hai �
 2. Dashboard pe **"Cloud name"** copy karo.
 3. Settings (⚙️) → **Upload** tab → **Upload presets** → **Add upload preset**.
 4. **Signing Mode = "Unsigned"** karo (zaroori) → Save.
-5. **Sujhaav:** isi preset ke "Format restrictions" me sirf `jpg,png,webp,mp4,mov` allow karo, aur agar option dikhe to max file size bhi set kar do (image ~10MB, video ~50MB kaafi hai ek product ke liye). Isse koi random bada file daal ke tumhara free quota waste nahi kar payega.
-6. Cloud name aur preset naam `firebase-config.js` me `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_UPLOAD_PRESET` ki jagah daal do.
+5. Cloud name aur preset naam `firebase-config.js` me `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_UPLOAD_PRESET` ki jagah daal do.
 
-## Step 5 — Pehla admin manually banao (sirf ek baar, zaroori security step)
+## Step 5 — Admin login accounts banao (zaroori security step)
 
-Website khud apna pehla admin nahi bana sakti (warna koi bhi khud ko admin bana lega) — isliye yeh ek step tumhe khud Firebase console me karna hoga:
+Yeh step Firebase console me karna hai — website se nahi (security ke liye zaroori hai):
 
-1. Firebase console → **Firestore Database** → "Start collection" → collection ID: `config`.
-2. Document ID: `admins`. Uske andar 2 fields banao:
-   - `emails` → type **array** → usme apna aur friend ka Gmail daal do (jaise `["tumhara@gmail.com","friend@gmail.com"]`)
-   - `panelPassword` → type **string** → koi bhi shuru ka password (baad me admin panel se change ho sakta hai)
-3. Ek aur document banao usi `config` collection me — Document ID: `settings` (khaali chhod sakte ho, website apne aap default values daal degi pehli baar khulne pe... agar nahi daalti to admin panel ke "Shop settings" se ek baar Save daba dena).
+1. Firebase console → **Authentication** → **Users** tab → **"Add user"**
+2. Har admin (tum, friend, koi bhi recovery account) ke liye:
+   - **Email:** unka Gmail address (jaise `friend@gmail.com`)
+   - **Password:** koi bhi strong password chuno — **yeh unke Google account ka password nahi hai**, sirf isi website ke liye ek naya password hai. Unhe yeh password bata dena.
+3. Repeat karo har admin ke liye
 
-Ab jo bhi email `emails` array me hai, wahi Google account admin panel khol sakta hai. Naye/recovery account baad me **admin panel → "Admin access" tab** se hi add ho sakte hain, code chhue bina.
+**Naya admin baad me add karna ho:** wapas isi jagah (Authentication → Users → Add user) — 2 minute ka kaam hai, website se nahi hota (jaan-boojh kar, security ke liye).
 
-## Step 6 — Security rules laga do (zaroori)
+## Step 6 — Pehla Firestore document banao (panel password + record ke liye)
+
+1. **Firestore Database → Data tab** → "Start collection" → Collection ID: `config` → Next
+2. Document ID: `admins`. Do fields banao:
+   - `emails` → type **array** → sabhi admin emails daal do (sirf record/display ke liye, yeh access control nahi karta — asli control Step 5 wale Users list se hota hai)
+   - `panelPassword` → type **string** → koi bhi shuruaati password (baad me admin panel se change ho sakta hai)
+3. Ek aur document banao usi `config` collection me — Document ID: `settings` (khaali chhod sakte ho)
+
+## Step 7 — Security rules laga do (zaroori)
 
 Firestore Database → **Rules tab** me yeh paste karo → **Publish**:
 
@@ -68,73 +74,60 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
-      return request.auth != null &&
-        request.auth.token.email in get(/databases/$(database)/documents/config/admins).data.emails;
+    match /config/settings {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     match /config/admins {
-      allow read, write: if request.auth != null &&
-        request.auth.token.email in resource.data.emails;
-    }
-
-    match /config/settings {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if request.auth != null;
     }
 
     match /products/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if request.auth != null;
     }
   }
 }
 ```
 
-Matlab: koi bhi products dekh sakta hai, lekin sirf allowed Google account hi kuch change kar sakta hai — Google login ke baad bhi, agar email list me nahi hai to kuch bhi read/write nahi hoga.
+Matlab: koi bhi products dekh sakta hai, lekin sirf woh log jo Step 5 me signed-in hain (matlab jinke liye humne Firebase Users me account banaya) hi data change kar sakte hain.
 
-## Step 7 — Website ko live karo (free hosting)
+## Step 8 — Website ko live karo (free hosting)
 
-**Firebase Hosting:**
-1. [Node.js](https://nodejs.org) install karo → terminal me `npm install -g firebase-tools`
-2. Is folder ke andar: `firebase login` → `firebase init hosting` (public directory: `.`, single-page app: No)
-3. `firebase deploy` → live URL milega (jaise `aabhira-jewels.web.app`)
-
-**Ya Netlify (bina terminal ke):** [netlify.com](https://netlify.com) → free account → poore folder ko "Deploy manually" box me drag-drop karo → turant live link.
+GitHub + Netlify (jo tumne already kar liya hai) — koi terminal nahi chahiye, tablet se hi ho jaata hai. Naye updates ke liye bas GitHub pe file re-upload karo, Netlify khud rebuild kar dega.
 
 ---
 
 ## Roz ka use — admin panel kaise khulega
 
 1. Search bar me `shop admin` type karke Enter (yeh phrase `app.js` ki pehli line se badal sakte ho)
-2. **"Continue with Google"** → apna allowed Google account choose karo
+2. Apna admin **email + password** daalo (Step 5 wala)
 3. Panel password daalo
 4. Andar se:
    - **Products** → add/edit/delete, multiple photos + ek video per product
    - **Home banners** → home page ke upar slider ke liye images add/remove
    - **Shop settings** → naam, tagline, address, WhatsApp number, categories
-   - **Admin access** → naye Google account add/remove karo, panel password badlo
+   - **Admin access** → yahan sirf list dikhti hai kiske paas access hai; naya add/remove karna ho to Firebase console (Step 5) me karna hoga. Panel password yahan se change ho sakta hai.
 5. Kaam ho jaaye to **"Sign out"**
-
-> Har baar naya session (browser band karke dobara kholne pe) same poora process dobara karna padega — Google apne aap silently sign-in kar sakta hai (agar pehle se signed in ho), lekin panel password har baar dobara maangega.
 
 ## Enquiry list (cart jaisa, bina payment ke)
 
-Customer kai products "Add to enquiry list" se select kar sakta hai, phir top ke bag icon se ek hi WhatsApp message me sab bhej sakta hai. **Payment kahin nahi hai** — yeh sirf ek shuruaati message hai, order/payment counter pe hi hoga, jaisa tumne bola.
+Customer kai products "Add to enquiry list" se select kar sakta hai, phir top ke bag icon se ek hi WhatsApp message me sab bhej sakta hai. **Payment kahin nahi hai** — yeh sirf ek shuruaati message hai, order/payment counter pe hi hoga.
 
 ## Copyright/footer
 
 Footer me automatic dikhta hai: `© [current year] [Shop name]. All rights reserved.` — saal khud-ba-khud update hota rahega. Shop ka naam aur address "Shop settings" se aata hai.
 
-> **Trademark (™) ke baare me:** Maine yeh symbol jaan-boojh kar nahi lagaya. ™ tabhi lagana sahi hai jab naam/logo actually registered ho. Agar future me trademark register karate ho, bata dena, ek line add kar dunga.
+> **Trademark (™):** jaan-boojh kar nahi lagaya — sirf tabhi lagana sahi hai jab naam/logo registered ho. Register karaya ho to bata dena, add kar dunga.
 
 ## Yeh site light kyu hai
 
 - Koi heavy framework nahi — plain HTML/CSS/JS
 - Images `loading="lazy"` — jab tak scroll na karo, load nahi hoti
-- Cloudinary khud compress/optimize karta hai, CDN se fast deliver hota hai
+- Cloudinary khud compress/optimize karta hai
 - Firestore free tier chhoti/medium shop ke liye kaafi hai, koi card nahi
 
 ## Agar kuch fix karwana ho
 
-Agli baar bata dena — "yeh section add karo" ya "yeh badlo" bol dena, seedha update kar dunga.
+Agli baar bata dena — seedha update kar dunga.

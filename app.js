@@ -9,7 +9,6 @@ const ADMIN_TRIGGER = "shop admin";
 
 const db = firebase.firestore();
 const auth = firebase.auth();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 const SETTINGS_DOC = db.collection("config").doc("settings");
 const ADMINS_DOC = db.collection("config").doc("admins");
@@ -378,44 +377,37 @@ $("searchInput").addEventListener("keydown", (e) => {
 });
 
 /* ---------------------------------------------------------------------
-   ADMIN AUTH — STEP 1: Google sign-in + allow-list check
+   ADMIN AUTH — STEP 1: email + password sign-in
    --------------------------------------------------------------------- */
 $("googleLoginClose").onclick = () => closeBackdrop($("googleLoginBackdrop"));
 
-// Popups are unreliable on mobile/tablet browsers (often silently
-// blocked), so we use a full-page redirect instead: tapping the
-// button sends the browser to Google, then back to this same page.
-$("googleSignInBtn").onclick = () => {
-  auth.signInWithRedirect(googleProvider);
-};
-
-async function handleRedirectResult(){
+$("emailLoginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("googleLoginError").hidden = true;
+  $("emailLoginSubmit").disabled = true;
+  $("emailLoginSubmit").textContent = "Signing in…";
+  const email = $("emailLoginEmail").value.trim();
+  const pass = $("emailLoginPassword").value;
   try{
-    const result = await auth.getRedirectResult();
-    if (!result || !result.user) return; // page loaded normally, not a redirect return
-
-    const email = result.user.email;
-    // Try to read the admins doc — Firestore rules only allow this
-    // if this exact email is already in the allow-list.
+    await auth.signInWithEmailAndPassword(email, pass);
     const snap = await ADMINS_DOC.get();
-    if (!snap.exists || !(snap.data().emails || []).includes(email)){
-      throw new Error("not-authorized");
-    }
-
-    currentAdminData = snap.data();
+    currentAdminData = snap.exists ? snap.data() : { emails: [], panelPassword: "" };
     verifiedAdminEmail = email;
     passwordAttempts = 0;
+    $("emailLoginForm").reset();
     closeBackdrop($("googleLoginBackdrop"));
     $("panelPasswordSub").textContent = `Step 2 of 2 — signed in as ${email}. Enter the panel password.`;
     openBackdrop($("panelPasswordBackdrop"));
   } catch(err){
     console.error(err);
     await auth.signOut();
-    openBackdrop($("googleLoginBackdrop"));
-    $("googleLoginError").textContent = "This Google account isn't allowed to manage this shop.";
+    $("googleLoginError").textContent = "That email or password isn't right. Try again.";
     $("googleLoginError").hidden = false;
+  } finally {
+    $("emailLoginSubmit").disabled = false;
+    $("emailLoginSubmit").textContent = "Continue";
   }
-}
+});
 
 /* ---------------------------------------------------------------------
    ADMIN AUTH — STEP 2: panel password
@@ -577,45 +569,18 @@ $("bannerAddForm").addEventListener("submit", async (e) => {
 });
 
 /* ---------------------------------------------------------------------
-   ADMIN: ACCESS LIST (allowed Google emails + panel password)
+   ADMIN: ACCESS LIST (informational — real access is Firebase Auth Users)
    --------------------------------------------------------------------- */
 function renderAccessList(){
   const emails = (currentAdminData && currentAdminData.emails) || [];
-  $("accessEmailList").innerHTML = emails.map(email => `
-    <div class="admin-row">
-      <div class="admin-row-info"><div class="name">${escapeHtml(email)}</div></div>
-      <button data-email="${escapeAttr(email)}" ${emails.length <= 1 ? "disabled" : ""}>Remove</button>
-    </div>
-  `).join("");
-  $("accessEmailList").querySelectorAll("button").forEach(btn => {
-    btn.onclick = async () => {
-      const email = btn.dataset.email;
-      if (email === verifiedAdminEmail){
-        if (!confirm("This removes YOUR OWN access. Continue?")) return;
-      } else if (!confirm(`Remove ${email}?`)) return;
-      const emails = (currentAdminData.emails || []).filter(e => e !== email);
-      await ADMINS_DOC.update({ emails });
-      currentAdminData.emails = emails;
-      renderAccessList();
-      if (email === verifiedAdminEmail){
-        $("adminLogoutBtn").click();
-      }
-    };
-  });
+  $("accessEmailList").innerHTML = emails.length
+    ? emails.map(email => `
+        <div class="admin-row">
+          <div class="admin-row-info"><div class="name">${escapeHtml(email)}</div></div>
+        </div>
+      `).join("")
+    : `<p class="tab-hint">No emails on record yet.</p>`;
 }
-
-$("addEmailForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = $("newAdminEmail").value.trim().toLowerCase();
-  if (!email) return;
-  const emails = Array.from(new Set([...(currentAdminData.emails || []), email]));
-  await ADMINS_DOC.update({ emails });
-  currentAdminData.emails = emails;
-  renderAccessList();
-  $("addEmailForm").reset();
-  $("accessSaveMsg").hidden = false;
-  setTimeout(() => { $("accessSaveMsg").hidden = true; }, 2000);
-});
 
 $("changePasswordForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -814,4 +779,3 @@ $("deleteProductBtn").onclick = async () => {
 $("year").textContent = new Date().getFullYear();
 loadEnquiry();
 loadSettings().then(subscribeProducts);
-handleRedirectResult();
