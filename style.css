@@ -527,10 +527,10 @@ input, textarea, select{ font-family: inherit; }
 }
 .banner-slide{
   min-width: 100%; position: relative;
-  aspect-ratio: 16 / 6;
+  aspect-ratio: 16 / 9;
+  background: var(--ink);
 }
-@media (max-width: 700px){ .banner-slide{ aspect-ratio: 16 / 9; } }
-.banner-slide img{ width: 100%; height: 100%; object-fit: cover; }
+.banner-slide img{ width: 100%; height: 100%; object-fit: contain; }
 .banner-caption{
   position: absolute; left: 24px; bottom: 20px;
   color: var(--bone); font-family: var(--serif);
