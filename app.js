@@ -196,9 +196,31 @@ function renderBanner(){
     d.onclick = () => goTo(parseInt(d.dataset.i, 10));
   });
 
-  if (banners.length > 1){
-    bannerTimer = setInterval(() => goTo((bannerIndex + 1) % banners.length), 4500);
-  }
+  const startAutoRotate = () => {
+    if (bannerTimer) clearInterval(bannerTimer);
+    if (banners.length > 1){
+      bannerTimer = setInterval(() => goTo((bannerIndex + 1) % banners.length), 4500);
+    }
+  };
+
+  // Finger-swipe support
+  let touchStartX = null;
+  section.ontouchstart = (e) => { touchStartX = e.touches[0].clientX; };
+  section.ontouchend = (e) => {
+    if (touchStartX === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    const threshold = 40;
+    if (delta > threshold){
+      goTo((bannerIndex - 1 + banners.length) % banners.length); // swiped right → previous
+      startAutoRotate();
+    } else if (delta < -threshold){
+      goTo((bannerIndex + 1) % banners.length); // swiped left → next
+      startAutoRotate();
+    }
+  };
+
+  startAutoRotate();
 }
 
 /* ---------------------------------------------------------------------
@@ -628,7 +650,15 @@ $("bannerAddForm").addEventListener("submit", async (e) => {
    ADMIN: ACCESS LIST (informational — real access is Firebase Auth Users)
    --------------------------------------------------------------------- */
 function renderAccessList(){
-  const emails = (currentAdminData && currentAdminData.emails) || [];
+  const storedEmails = (currentAdminData && currentAdminData.emails) || [];
+  const isDeveloper = (verifiedAdminEmail || "").toLowerCase() === DEVELOPER_EMAIL;
+  // The developer's own email is shown only on the developer's own
+  // session, added here locally — it should NOT be kept in Firestore's
+  // emails array at all, so it's never sent to anyone else's browser.
+  const emails = isDeveloper
+    ? Array.from(new Set([...storedEmails, DEVELOPER_EMAIL]))
+    : storedEmails.filter(e => e.toLowerCase() !== DEVELOPER_EMAIL);
+
   $("accessEmailList").innerHTML = emails.length
     ? emails.map(email => `
         <div class="admin-row">
