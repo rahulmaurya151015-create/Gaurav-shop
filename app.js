@@ -79,6 +79,8 @@ async function loadSettings(){
     console.error("Could not load settings, using defaults.", e);
   }
   applySettingsToPage();
+  // expose for product-detail.js
+  window.currentSettingsGlobal = currentSettings;
 }
 
 function applySettingsToPage(){
@@ -212,10 +214,10 @@ function renderBanner(){
     touchStartX = null;
     const threshold = 40;
     if (delta > threshold){
-      goTo((bannerIndex - 1 + banners.length) % banners.length); // swiped right → previous
+      goTo((bannerIndex - 1 + banners.length) % banners.length);
       startAutoRotate();
     } else if (delta < -threshold){
-      goTo((bannerIndex + 1) % banners.length); // swiped left → next
+      goTo((bannerIndex + 1) % banners.length);
       startAutoRotate();
     }
   };
@@ -235,6 +237,9 @@ function subscribeProducts(){
     renderAdminProductList();
     renderEnquiry();
     renderCategoryShowcase();
+
+    // expose for product-detail.js
+    window.allProductsGlobal = allProducts;
   }, err => {
     console.error(err);
     $("loadingState").textContent = "Couldn't load products right now.";
@@ -260,10 +265,14 @@ function renderProducts(){
   list.forEach(p => {
     const card = document.createElement("div");
     card.className = "product-card";
+
+    const isWished = (typeof window.isInWishlist === "function" && window.isInWishlist(p.id)) || false;
+
     card.innerHTML = `
       <div class="product-card-media">
         <img src="${escapeAttr(thumbOf(p))}" alt="${escapeAttr(p.name || '')}" loading="lazy" />
         ${(p.images && p.images.length > 1) ? `<span class="multi-badge">${p.images.length} photos</span>` : ""}
+        <button type="button" class="product-wish-btn ${isWished ? 'active' : ''}" data-wish-btn="${p.id}" aria-label="Add to wishlist">${isWished ? '❤' : '🤍'}</button>
       </div>
       <div class="product-card-body">
         <p class="product-card-cat">${escapeHtml(p.category || '')}</p>
@@ -271,82 +280,31 @@ function renderProducts(){
         <p class="product-card-price">${escapeHtml(p.price || '')}</p>
       </div>
     `;
-    card.onclick = () => openProductModal(p.id);
+
+    // Card click → open product detail page
+    card.onclick = (e) => {
+      if (e.target.closest("[data-wish-btn]")) return;
+      if (typeof window.openProductDetail === "function") {
+        window.openProductDetail(p.id);
+      }
+    };
+
+    // Wishlist button
+    const wishBtn = card.querySelector("[data-wish-btn]");
+    if (wishBtn) {
+      wishBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof window.toggleWishlist === "function") {
+          const added = window.toggleWishlist(p.id);
+          wishBtn.classList.toggle("active", added);
+          wishBtn.textContent = added ? "❤" : "🤍";
+        }
+      };
+    }
+
     grid.appendChild(card);
   });
 }
-
-/* ---------------------------------------------------------------------
-   PRODUCT DETAIL MODAL (gallery + video + related)
-   --------------------------------------------------------------------- */
-function openProductModal(id){
-  const p = allProducts.find(x => x.id === id);
-  if (!p) return;
-  currentModalProductId = id;
-
-  const images = p.images && p.images.length ? p.images : [""];
-  showMainMedia(images[0], "image");
-
-  $("pmThumbs").innerHTML = images.map((url, i) =>
-    `<button class="pm-thumb${i === 0 ? ' active' : ''}" data-url="${escapeAttr(url)}" data-type="image">
-       <img src="${escapeAttr(url)}" alt="" />
-     </button>`
-  ).join("") + (p.videoUrl ? `
-     <button class="pm-thumb pm-thumb-video" data-url="${escapeAttr(p.videoUrl)}" data-type="video">▶</button>
-  ` : "");
-
-  $("pmThumbs").querySelectorAll(".pm-thumb").forEach(btn => {
-    btn.onclick = () => {
-      $("pmThumbs").querySelectorAll(".pm-thumb").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      showMainMedia(btn.dataset.url, btn.dataset.type);
-    };
-  });
-
-  $("pmCategory").textContent = p.category || "";
-  $("pmName").textContent = p.name || "";
-  $("pmPrice").textContent = p.price || "";
-  $("pmDesc").textContent = p.description || "";
-  $("pmWhatsapp").href = waLink(currentSettings.whatsapp, `Hi! I'd like to ask about "${p.name}" (${p.price || ''}).`);
-  updateEnquiryButtonState();
-
-  renderRelated(p);
-  openBackdrop($("productModalBackdrop"));
-}
-
-function showMainMedia(url, type){
-  if (type === "video"){
-    $("pmVideo").src = url;
-    $("pmVideo").hidden = false;
-    $("pmImage").hidden = true;
-  } else {
-    $("pmImage").src = url;
-    $("pmImage").hidden = false;
-    $("pmVideo").hidden = true;
-    $("pmVideo").pause?.();
-  }
-}
-
-function renderRelated(p){
-  const related = allProducts.filter(x => x.id !== p.id && x.category === p.category).slice(0, 4);
-  const wrap = $("pmRelatedWrap");
-  if (!related.length){ wrap.hidden = true; return; }
-  wrap.hidden = false;
-  $("pmRelatedGrid").innerHTML = related.map(r => `
-    <div class="pm-related-card" data-id="${r.id}">
-      <img src="${escapeAttr(thumbOf(r))}" alt="${escapeAttr(r.name || '')}" loading="lazy" />
-      <p>${escapeHtml(r.name || '')}</p>
-    </div>
-  `).join("");
-  $("pmRelatedGrid").querySelectorAll(".pm-related-card").forEach(card => {
-    card.onclick = () => openProductModal(card.dataset.id);
-  });
-}
-
-$("productModalClose").onclick = () => closeBackdrop($("productModalBackdrop"));
-$("productModalBackdrop").addEventListener("click", (e) => {
-  if (e.target === $("productModalBackdrop")) closeBackdrop($("productModalBackdrop"));
-});
 
 /* ---------------------------------------------------------------------
    ENQUIRY LIST (client-side "cart", no payment — just a WhatsApp message)
@@ -360,23 +318,22 @@ function saveEnquiry(){
 }
 function updateEnquiryButtonState(){
   const btn = $("pmAddEnquiry");
+  if (!btn) return;
   if (!currentModalProductId) return;
   const added = enquiryIds.includes(currentModalProductId);
   btn.textContent = added ? "Remove from enquiry list" : "Add to enquiry list";
   btn.classList.toggle("btn-added", added);
 }
-$("pmAddEnquiry").onclick = () => {
-  if (!currentModalProductId) return;
-  const i = enquiryIds.indexOf(currentModalProductId);
-  if (i === -1) enquiryIds.push(currentModalProductId);
+function addToEnquiry(productId){
+  if (!productId) return;
+  const i = enquiryIds.indexOf(productId);
+  if (i === -1) enquiryIds.push(productId);
   else enquiryIds.splice(i, 1);
   saveEnquiry();
-  updateEnquiryButtonState();
   renderEnquiry();
-};
+}
 
 function renderEnquiry(){
-  // drop ids of products that no longer exist
   enquiryIds = enquiryIds.filter(id => allProducts.some(p => p.id === id));
   saveEnquiry();
 
@@ -421,7 +378,6 @@ $("enquiryClearBtn").onclick = () => {
   enquiryIds = [];
   saveEnquiry();
   renderEnquiry();
-  updateEnquiryButtonState();
 };
 
 /* ---------------------------------------------------------------------
@@ -500,17 +456,14 @@ function playWelcomeVideoThenOpenPanel(){
     enterAdminPanel();
   };
 
-  if (videoEl.src !== url) videoEl.src = url; // fallback if preload never ran
+  if (videoEl.src !== url) videoEl.src = url;
   videoEl.muted = false;
   videoEl.currentTime = 0;
   tapBtn.hidden = true;
   openBackdrop(backdrop);
-  videoEl.onended = handOff; // the ONLY way forward — no skip
+  videoEl.onended = handOff;
 
   videoEl.play().catch(() => {
-    // The browser blocked sound-autoplay this one time — a direct tap
-    // is always allowed to play with sound. This starts the mandatory
-    // video; it still has to finish before the panel opens.
     tapBtn.hidden = false;
     tapBtn.onclick = () => {
       tapBtn.hidden = true;
@@ -539,8 +492,6 @@ $("adminLogoutBtn").onclick = async () => {
 $("adminCloseBtn").onclick = () => closeBackdrop($("adminBackdrop"));
 
 auth.onAuthStateChanged(user => {
-  // A silent session alone never opens the panel — the secret
-  // phrase + email/password sign-in are still required every time.
   if (!user){ isAdmin = false; verifiedAdminEmail = null; }
 });
 
@@ -589,6 +540,7 @@ $("settingsForm").addEventListener("submit", async (e) => {
   };
   await SETTINGS_DOC.set(updated, { merge: true });
   currentSettings = { ...currentSettings, ...updated };
+  window.currentSettingsGlobal = currentSettings;
   applySettingsToPage();
   $("settingsSaveMsg").hidden = false;
   setTimeout(() => { $("settingsSaveMsg").hidden = true; }, 2500);
@@ -616,6 +568,7 @@ function renderAdminBannerList(){
       banners.splice(parseInt(btn.dataset.i, 10), 1);
       await SETTINGS_DOC.set({ banners }, { merge: true });
       currentSettings.banners = banners;
+      window.currentSettingsGlobal = currentSettings;
       renderAdminBannerList();
       renderBanner();
     };
@@ -636,6 +589,7 @@ $("bannerAddForm").addEventListener("submit", async (e) => {
     const banners = [...(currentSettings.banners || []), { imageUrl: url, caption: $("bannerCaption").value.trim() }];
     await SETTINGS_DOC.set({ banners }, { merge: true });
     currentSettings.banners = banners;
+    window.currentSettingsGlobal = currentSettings;
     renderAdminBannerList();
     renderBanner();
     $("bannerAddForm").reset();
@@ -652,9 +606,6 @@ $("bannerAddForm").addEventListener("submit", async (e) => {
 function renderAccessList(){
   const storedEmails = (currentAdminData && currentAdminData.emails) || [];
   const isDeveloper = (verifiedAdminEmail || "").toLowerCase() === DEVELOPER_EMAIL;
-  // The developer's own email is shown only on the developer's own
-  // session, added here locally — it should NOT be kept in Firestore's
-  // emails array at all, so it's never sent to anyone else's browser.
   const emails = isDeveloper
     ? Array.from(new Set([...storedEmails, DEVELOPER_EMAIL]))
     : storedEmails.filter(e => e.toLowerCase() !== DEVELOPER_EMAIL);
@@ -684,6 +635,7 @@ $("settingsVideoFile").addEventListener("change", async (e) => {
     });
     await SETTINGS_DOC.set({ welcomeVideoUrl: url }, { merge: true });
     currentSettings.welcomeVideoUrl = url;
+    window.currentSettingsGlobal = currentSettings;
     renderSettingsVideoRow();
     progress.hidden = true;
     $("accessSaveMsg").hidden = false;
@@ -700,6 +652,7 @@ $("removeSettingsVideoBtn").onclick = async () => {
   if (!confirm("Remove the sign-in welcome video?")) return;
   await SETTINGS_DOC.set({ welcomeVideoUrl: "" }, { merge: true });
   currentSettings.welcomeVideoUrl = "";
+  window.currentSettingsGlobal = currentSettings;
   renderSettingsVideoRow();
 };
 
@@ -754,7 +707,7 @@ function uploadToCloudinary(file, resourceType, onProgress){
    ADMIN: ADD / EDIT / DELETE PRODUCT
    --------------------------------------------------------------------- */
 let editingId = null;
-let editingImages = [];   // array of already-uploaded URLs (existing + newly added)
+let editingImages = [];
 let editingVideoUrl = null;
 
 function openProductEdit(p){
