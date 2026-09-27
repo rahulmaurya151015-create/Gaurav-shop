@@ -126,42 +126,6 @@ function renderCategoryChips(){
     sel.innerHTML = cats.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("");
     if (cats.includes(current)) sel.value = current;
   }
-  renderCategoryShowcase();
-}
-
-/* ---------------------------------------------------------------------
-   SHOP BY CATEGORY — image tiles (PC Chandra-style), auto-built from
-   whichever product photo represents each category, no extra admin work
-   --------------------------------------------------------------------- */
-function renderCategoryShowcase(){
-  const cats = (currentSettings.categories || "").split(",").map(c => c.trim()).filter(Boolean);
-  const wrap = $("catShowcaseWrap");
-  const grid = $("catShowcaseGrid");
-  if (!wrap || !grid) return;
-
-  const tiles = cats
-    .map(cat => {
-      const rep = allProducts.find(p => p.category === cat && p.images && p.images.length);
-      return rep ? { cat, img: rep.images[0] } : null;
-    })
-    .filter(Boolean);
-
-  if (!tiles.length){ wrap.hidden = true; return; }
-  wrap.hidden = false;
-  grid.innerHTML = tiles.map(t => `
-    <button class="cat-tile" data-cat="${escapeAttr(t.cat)}">
-      <span class="cat-tile-media"><img src="${escapeAttr(t.img)}" alt="${escapeAttr(t.cat)}" loading="lazy" /></span>
-      <span class="cat-tile-label">${escapeHtml(t.cat)}</span>
-    </button>
-  `).join("");
-  grid.querySelectorAll(".cat-tile").forEach(btn => {
-    btn.onclick = () => {
-      activeCategory = btn.dataset.cat;
-      renderCategoryChips();
-      renderProducts();
-      $("productGrid").scrollIntoView({ behavior: "smooth", block: "start" });
-    };
-  });
 }
 
 /* ---------------------------------------------------------------------
@@ -236,7 +200,6 @@ function subscribeProducts(){
     renderProducts();
     renderAdminProductList();
     renderEnquiry();
-    renderCategoryShowcase();
 
     // expose for product-detail.js
     window.allProductsGlobal = allProducts;
@@ -316,14 +279,6 @@ function loadEnquiry(){
 function saveEnquiry(){
   localStorage.setItem("enquiry_list", JSON.stringify(enquiryIds));
 }
-function updateEnquiryButtonState(){
-  const btn = $("pmAddEnquiry");
-  if (!btn) return;
-  if (!currentModalProductId) return;
-  const added = enquiryIds.includes(currentModalProductId);
-  btn.textContent = added ? "Remove from enquiry list" : "Add to enquiry list";
-  btn.classList.toggle("btn-added", added);
-}
 function addToEnquiry(productId){
   if (!productId) return;
   const i = enquiryIds.indexOf(productId);
@@ -332,6 +287,19 @@ function addToEnquiry(productId){
   saveEnquiry();
   renderEnquiry();
 }
+window.addToEnquiry = addToEnquiry;
+window.toggleEnquiry = function(productId){
+  if (!productId) return false;
+  const i = enquiryIds.indexOf(productId);
+  if (i === -1) enquiryIds.push(productId);
+  else enquiryIds.splice(i, 1);
+  saveEnquiry();
+  renderEnquiry();
+  return enquiryIds.includes(productId);
+};
+window.isInEnquiry = function(productId){
+  return enquiryIds.includes(productId);
+};
 
 function renderEnquiry(){
   enquiryIds = enquiryIds.filter(id => allProducts.some(p => p.id === id));
@@ -358,7 +326,6 @@ function renderEnquiry(){
       enquiryIds = enquiryIds.filter(id => id !== btn.dataset.id);
       saveEnquiry();
       renderEnquiry();
-      updateEnquiryButtonState();
     };
   });
 
@@ -462,6 +429,7 @@ function playWelcomeVideoThenOpenPanel(){
   tapBtn.hidden = true;
   openBackdrop(backdrop);
   videoEl.onended = handOff;
+  videoEl.onerror = handOff;
 
   videoEl.play().catch(() => {
     tapBtn.hidden = false;
