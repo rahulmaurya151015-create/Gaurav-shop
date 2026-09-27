@@ -134,50 +134,6 @@ input, textarea, select{ font-family: inherit; }
 }
 
 /* ==========================================================
-   SHOP BY CATEGORY — image tiles
-   ========================================================== */
-.cat-showcase-wrap{
-  max-width: 1180px;
-  margin: 48px auto 0;
-  padding: 0 24px;
-}
-.cat-showcase-title{
-  font-family: var(--serif);
-  font-weight: 500;
-  font-size: 1.6rem;
-  color: var(--gold-bright);
-  margin: 0 0 18px;
-}
-.cat-showcase-grid{
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-@media (max-width: 700px){
-  .cat-showcase-grid{ grid-template-columns: repeat(2, 1fr); }
-}
-.cat-tile{
-  background: var(--ink-card);
-  border: 1px solid var(--line-gold-soft);
-  border-radius: 4px;
-  padding: 0;
-  overflow: hidden;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.cat-tile:hover{ border-color: var(--gold-bright); transform: translateY(-2px); }
-.cat-tile-media{ display: block; aspect-ratio: 1/1; overflow: hidden; background: var(--ink-soft); }
-.cat-tile-media img{ width: 100%; height: 100%; object-fit: cover; }
-.cat-tile-label{
-  display: block;
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  color: var(--cream);
-  padding: 10px 14px 14px;
-}
-
-/* ==========================================================
    CATEGORY NAV
    ========================================================== */
 .cat-nav{
@@ -362,13 +318,13 @@ input, textarea, select{ font-family: inherit; }
 .login-modal{ max-width: 380px; padding: 36px 32px; }
 .login-modal h2{ font-family: var(--serif); font-size: 1.6rem; margin: 0 0 4px; }
 .login-sub{ font-size: 0.85rem; color: var(--text-muted); margin: 0 0 22px; }
-#loginForm label, #settingsForm label, #productEditForm label{
+#emailLoginForm label, #settingsForm label, #productEditForm label{
   display: block;
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-bottom: 14px;
 }
-#loginForm input, #settingsForm input, #settingsForm textarea,
+#emailLoginForm input, #settingsForm input, #settingsForm textarea,
 #productEditForm input, #productEditForm textarea, #productEditForm select{
   display: block;
   width: 100%;
@@ -380,7 +336,7 @@ input, textarea, select{ font-family: inherit; }
   color: var(--ink);
   background: #fff;
 }
-#loginForm input:focus, #settingsForm input:focus, #settingsForm textarea:focus,
+#emailLoginForm input:focus, #settingsForm input:focus, #settingsForm textarea:focus,
 #productEditForm input:focus, #productEditForm textarea:focus, #productEditForm select:focus{
   outline: none; border-color: var(--gold);
 }
@@ -589,11 +545,6 @@ input, textarea, select{ font-family: inherit; }
 /* ==========================================================
    ADMIN AUTH MODALS
    ========================================================== */
-.google-btn{
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  width: 100%; background: #fff; color: var(--ink); border: 1px solid var(--line);
-}
-.google-btn:hover{ background: var(--champagne); }
 .admin-whoami{ font-size: 0.8rem; color: var(--text-muted); margin-right: 4px; }
 
 /* ==========================================================
@@ -602,9 +553,6 @@ input, textarea, select{ font-family: inherit; }
 .tab-hint{ font-size: 0.85rem; color: var(--text-muted); margin: 0 0 16px; max-width: 60ch; }
 .divider{ border: none; border-top: 1px solid var(--line); margin: 30px 0; }
 .access-list{ display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 16px; }
-.inline-add-form{ display: flex; gap: 10px; max-width: 420px; }
-.inline-add-form input{ flex: 1; padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; }
-.inline-add-form input:focus{ outline: none; border-color: var(--gold); }
 
 /* banner admin */
 .banner-add-form{ margin-top: 24px; max-width: 420px; }
@@ -996,24 +944,6 @@ input, textarea, select{ font-family: inherit; }
   left: 100%;
 }
 
-/* Add-to-enquiry button subtle glow on hover */
-#pmAddEnquiry {
-  transition: background 0.15s, color 0.15s, box-shadow 0.3s ease;
-}
-
-#pmAddEnquiry:hover {
-  box-shadow:
-    0 0 20px rgba(217, 180, 94, 0.6),
-    0 0 40px rgba(217, 180, 94, 0.3),
-    inset 0 0 12px rgba(217, 180, 94, 0.15);
-}
-
-/* Product detail page — gold glow around media */
-.pd-main-media {
-  box-shadow:
-    inset 0 0 40px rgba(217, 180, 94, 0.08);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .gold-sparkle {
     display: none !important;
@@ -1119,22 +1049,25 @@ input, textarea, select{ font-family: inherit; }
 }
 
 .pd-back-btn{
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(203,165,90,0.08);
   border: 1px solid var(--line-on-dark);
   color: var(--cream);
-  padding: 10px 22px;
+  padding: 9px 20px;
   font-size: 0.85rem;
-  border-radius: 2px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: all 0.2s ease;
   font-family: inherit;
 }
-
 .pd-back-btn:hover{
   background: var(--gold-light);
   color: var(--ink);
   border-color: var(--gold-light);
   transform: translateX(-3px);
+  box-shadow: 0 0 16px rgba(217,180,94,0.35);
 }
 
 /* ---- Main layout ---- */
@@ -1161,15 +1094,16 @@ input, textarea, select{ font-family: inherit; }
 
 .pd-main-media{
   position: relative;
-  background: var(--ink-soft);
+  background: linear-gradient(135deg, #1a1510 0%, #0d0a07 100%);
   border: 1px solid var(--line-gold-soft);
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  max-height: 560px;
+  max-height: 460px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
 .pd-main-media img,
@@ -1178,6 +1112,21 @@ input, textarea, select{ font-family: inherit; }
   height: 100%;
   object-fit: contain;
   display: block;
+  border-radius: 4px;
+}
+
+@media (max-width: 800px){
+  .pd-main-media{
+    max-height: 380px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px){
+  .pd-main-media{
+    max-height: 330px;
+    padding: 10px;
+  }
 }
 
 .pd-thumbs{
@@ -1274,43 +1223,74 @@ input, textarea, select{ font-family: inherit; }
 }
 
 .pd-btn{
+  appearance: none;
+  -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   padding: 14px 26px;
   font-size: 0.95rem;
-  border-radius: 2px;
+  border-radius: 4px;
   border: 1px solid var(--gold-light);
-  background: transparent;
-  color: var(--cream);
+  background-color: transparent !important;
+  color: var(--cream) !important;
   cursor: pointer;
   font-family: inherit;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s, box-shadow 0.25s;
+  transition: all 0.2s ease;
   font-weight: 400;
+  text-align: center;
 }
 
 .pd-btn:hover{
-  background: var(--gold-light);
-  color: var(--ink);
-  box-shadow: 0 0 20px rgba(217,180,94,0.4);
+  background-color: var(--gold-light) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 0 20px rgba(217,180,94,0.45);
 }
 
 .pd-btn-wa{
   border-color: var(--gold-bright);
-  color: var(--cream);
+  background-color: rgba(217,180,94,0.08) !important;
+}
+
+.pd-btn-wish{
+  background-color: transparent !important;
+  color: var(--cream) !important;
 }
 
 .pd-btn-wish.active{
-  background: var(--gold-light);
-  color: var(--ink);
+  background-color: var(--gold-light) !important;
+  color: var(--ink) !important;
   border-color: var(--gold-bright);
+}
+
+.pd-btn-enquiry{
+  border-color: var(--line-on-dark);
+  background-color: transparent !important;
+  color: var(--cream) !important;
+}
+
+.pd-btn-enquiry:hover{
+  background-color: rgba(217,180,94,0.15) !important;
+  color: var(--cream) !important;
+  border-color: var(--gold-bright);
+}
+
+.pd-btn-enquiry.active{
+  background-color: rgba(217,180,94,0.9) !important;
+  color: var(--ink) !important;
+  border-color: var(--gold-bright);
+}
+
+.pd-btn-enquiry.active:hover{
+  background-color: var(--gold-light) !important;
+  color: var(--ink) !important;
 }
 
 /* ---- Similar section ---- */
 .pd-similar-section{
-  margin-top: 40px;
+  margin-top: 60px;
   padding-top: 40px;
   border-top: 1px solid var(--line-gold-soft);
 }
@@ -1420,7 +1400,7 @@ input, textarea, select{ font-family: inherit; }
     height: 60px;
   }
   .pd-main-media{
-    max-height: 400px;
+    max-height: 320px;
   }
   .pd-btn{
     padding: 12px 20px;
@@ -1429,4 +1409,4 @@ input, textarea, select{ font-family: inherit; }
   .pd-similar-title{
     font-size: 1.3rem;
   }
-           }
+   }
