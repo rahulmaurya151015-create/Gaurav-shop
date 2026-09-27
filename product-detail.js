@@ -13,7 +13,6 @@
   const PRODUCT_PAGE = document.getElementById("productDetailPage");
   const GRID_WRAP = document.querySelector(".grid-wrap");
   const HERO = document.querySelector(".hero");
-  const CAT_SHOWCASE = document.getElementById("catShowcaseWrap");
   const CAT_NAV = document.getElementById("catNav");
   const ABOUT_DEV = document.querySelector(".about-developer-section");
   const BANNER_SECTION = document.getElementById("bannerSection");
@@ -105,12 +104,11 @@
     // Update URL — browser back button works
     const url = new URL(window.location.href);
     url.searchParams.set("product", productId);
-    history.pushState({ product: productId }, "", url.toString());
+    history.pushState({ product: productId, fromApp: true }, "", url.toString());
 
     // Hide home sections
     if (GRID_WRAP) GRID_WRAP.hidden = true;
     if (HERO) HERO.hidden = true;
-    if (CAT_SHOWCASE) CAT_SHOWCASE.hidden = true;
     if (CAT_NAV) CAT_NAV.hidden = true;
     if (ABOUT_DEV) ABOUT_DEV.hidden = true;
     if (BANNER_SECTION) BANNER_SECTION.hidden = true;
@@ -127,7 +125,7 @@
   /* ---------------------------------------------------
      CLOSE product detail
      --------------------------------------------------- */
-  window.closeProductDetail = function () {
+  window.closeProductDetail = function (fromPopstate) {
     currentProductId = null;
 
     // Hide detail
@@ -146,15 +144,15 @@
       BANNER_SECTION.hidden = !hasBanners;
     }
 
-    // Category showcase — only if it has content
-    if (CAT_SHOWCASE) {
-      CAT_SHOWCASE.hidden = false;
-    }
-
-    // Clear URL param
+    // Clear URL param — use replaceState when coming from popstate
+    // so we don't create a new history entry
     const url = new URL(window.location.href);
     url.searchParams.delete("product");
-    history.pushState({}, "", url.toString());
+    if (fromPopstate) {
+      history.replaceState({}, "", url.toString());
+    } else {
+      history.pushState({}, "", url.toString());
+    }
 
     // Reset title
     document.title = "Sree Shiv Alankar Mandir - Handcrafted Jewelry Shop";
@@ -178,15 +176,32 @@
     const msg = `Hi! I'd like to ask about "${p.name}" (${p.price || "price on ask"}).`;
     const waLinkUrl = waLink(wa, msg);
 
-    // Similar products — same category, exclude current
-    const similar = products
+    // Similar products — same category first, then fallback to others
+    let similar = products
       .filter((x) => x.id !== p.id && x.category === p.category)
       .slice(0, 4);
+
+    if (similar.length < 4) {
+      const extras = products
+        .filter((x) => x.id !== p.id && !similar.some((s) => s.id === x.id))
+        .slice(0, 4 - similar.length);
+      similar = similar.concat(extras);
+    }
+
+    const hasSameCategory = similar.some((s) => s.category === p.category);
+    const similarTitle = hasSameCategory
+      ? "You may also like"
+      : "More from our collection";
+
+    // Enquiry button state
+    const isInEnq = typeof window.isInEnquiry === "function"
+      ? window.isInEnquiry(p.id)
+      : false;
 
     PRODUCT_PAGE.innerHTML = `
       <div class="pd-container">
         <div class="pd-top-bar">
-          <button type="button" class="pd-back-btn" id="pdBackBtn">← Back to collection</button>
+          <button type="button" class="pd-back-btn" id="pdBackBtn">← Back to home</button>
         </div>
 
         <div class="pd-layout">
@@ -223,13 +238,16 @@
               <button type="button" class="pd-btn pd-btn-wish ${isWished ? "active" : ""}" data-wish-btn="${p.id}">
                 ${isWished ? "❤ Saved to Wishlist" : "🤍 Add to Wishlist"}
               </button>
+              <button type="button" class="pd-btn pd-btn-enquiry ${isInEnq ? "active" : ""}" id="pdEnquiryBtn" data-enq-id="${p.id}">
+                ${isInEnq ? "✓ In Enquiry List" : "🛒 Add to Enquiry List"}
+              </button>
             </div>
           </div>
         </div>
 
         ${similar.length ? `
           <section class="pd-similar-section">
-            <h2 class="pd-similar-title">You may also like</h2>
+            <h2 class="pd-similar-title">${similarTitle}</h2>
             <div class="pd-similar-grid">
               ${similar.map((sp) => {
                 const simg = thumbOf(sp);
@@ -257,7 +275,15 @@
     `;
 
     // ---- Wire up: Back button ----
-    document.getElementById("pdBackBtn").onclick = () => history.back();
+    document.getElementById("pdBackBtn").onclick = () => {
+      // Agar SPA navigation se aaya (product card pe click kiya tha), history.back() use karo
+      if (window.history.state && window.history.state.fromApp) {
+        history.back();
+      } else {
+        // Direct URL se khola tha — home pe reload karo
+        window.location.href = window.location.pathname;
+      }
+    };
 
     // ---- Wire up: Thumbnails ----
     const thumbs = document.getElementById("pdThumbs");
@@ -293,6 +319,17 @@
       };
     });
 
+    // ---- Wire up: Enquiry button ----
+    const enqBtn = document.getElementById("pdEnquiryBtn");
+    if (enqBtn) {
+      enqBtn.onclick = (e) => {
+        e.stopPropagation();
+        const added = window.toggleEnquiry(enqBtn.dataset.enqId);
+        enqBtn.classList.toggle("active", added);
+        enqBtn.innerHTML = added ? "✓ In Enquiry List" : "🛒 Add to Enquiry List";
+      };
+    }
+
     // ---- Wire up: Similar product cards ----
     PRODUCT_PAGE.querySelectorAll(".pd-similar-card").forEach((card) => {
       card.onclick = (e) => {
@@ -316,7 +353,6 @@
         currentProductId = pid;
         if (GRID_WRAP) GRID_WRAP.hidden = true;
         if (HERO) HERO.hidden = true;
-        if (CAT_SHOWCASE) CAT_SHOWCASE.hidden = true;
         if (CAT_NAV) CAT_NAV.hidden = true;
         if (ABOUT_DEV) ABOUT_DEV.hidden = true;
         if (BANNER_SECTION) BANNER_SECTION.hidden = true;
@@ -324,10 +360,10 @@
         renderDetailPage(pid);
         window.scrollTo(0, 0);
       } else {
-        window.closeProductDetail();
+        window.closeProductDetail(true);
       }
     } else {
-      window.closeProductDetail();
+      window.closeProductDetail(true);
     }
   });
 
@@ -351,7 +387,6 @@
           currentProductId = pid;
           if (GRID_WRAP) GRID_WRAP.hidden = true;
           if (HERO) HERO.hidden = true;
-          if (CAT_SHOWCASE) CAT_SHOWCASE.hidden = true;
           if (CAT_NAV) CAT_NAV.hidden = true;
           if (ABOUT_DEV) ABOUT_DEV.hidden = true;
           if (BANNER_SECTION) BANNER_SECTION.hidden = true;
