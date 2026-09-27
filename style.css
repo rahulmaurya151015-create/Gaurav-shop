@@ -918,3 +918,515 @@ input, textarea, select{ font-family: inherit; }
   15% {
     opacity: 1;
     transform: translate(calc(var(--drift, 0px) * 0.15), -12px) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate(calc(var(--drift, 0px) * 0.5), -30px) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift, 0px), -70px) scale(0.3);
+  }
+}
+
+/* Brand name shimmer sweep */
+#brandName,
+#footerBrand,
+#footerBrand2 {
+  background: linear-gradient(
+    100deg,
+    #CBA55A 0%,
+    #D9B45E 25%,
+    #FFF8C4 45%,
+    #FFD700 55%,
+    #D9B45E 75%,
+    #CBA55A 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: brandGoldShimmer 8s ease-in-out infinite;
+  transition: filter 0.3s ease;
+}
+
+#brandName:hover,
+#footerBrand:hover {
+  filter: drop-shadow(0 0 12px rgba(217, 180, 94, 0.7));
+}
+
+@keyframes brandGoldShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+/* Product card subtle gold glow on hover */
+.product-card {
+  position: relative;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(217, 180, 94, 0.4),
+    0 0 20px rgba(217, 180, 94, 0.25),
+    0 0 40px rgba(217, 180, 94, 0.1);
+}
+
+/* Product card pseudo-shine (light sweep) */
+.product-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(217, 180, 94, 0.15) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transition: left 0.6s ease;
+}
+
+.product-card:hover::after {
+  left: 100%;
+}
+
+/* Add-to-enquiry button subtle glow on hover */
+#pmAddEnquiry {
+  transition: background 0.15s, color 0.15s, box-shadow 0.3s ease;
+}
+
+#pmAddEnquiry:hover {
+  box-shadow:
+    0 0 20px rgba(217, 180, 94, 0.6),
+    0 0 40px rgba(217, 180, 94, 0.3),
+    inset 0 0 12px rgba(217, 180, 94, 0.15);
+}
+
+/* Product detail page — gold glow around media */
+.pd-main-media {
+  box-shadow:
+    inset 0 0 40px rgba(217, 180, 94, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-sparkle {
+    display: none !important;
+  }
+  #brandName,
+  #footerBrand,
+  #footerBrand2 {
+    animation: none !important;
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    color: var(--gold-bright) !important;
+  }
+  .product-card::after {
+    display: none !important;
+  }
+}
+
+/* ==========================================================
+   PRODUCT WISHLIST — Heart button on cards
+   ========================================================== */
+.product-wish-btn{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(20,17,15,0.55);
+  border: 1px solid rgba(217,180,94,0.4);
+  color: var(--bone);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  padding: 0;
+}
+
+.product-wish-btn:hover{
+  transform: scale(1.12);
+  border-color: var(--gold-bright);
+  background: rgba(20,17,15,0.75);
+}
+
+.product-wish-btn.active{
+  background: rgba(217,180,94,0.9);
+  color: var(--ink);
+  border-color: var(--gold-bright);
+  animation: wishPop 0.3s ease;
+}
+
+@keyframes wishPop{
+  0%{ transform: scale(1); }
+  50%{ transform: scale(1.3); }
+  100%{ transform: scale(1); }
+}
+
+/* ==========================================================
+   WISHLIST BUTTON in topbar
+   ========================================================== */
+.wishlist-btn-top{
+  position: relative;
+}
+
+.wishlist-count{
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* ==========================================================
+   PRODUCT DETAIL PAGE (SPA)
+   ========================================================== */
+.product-detail-page{
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 100px;
+  min-height: 60vh;
+}
+
+.pd-container{
+  width: 100%;
+}
+
+.pd-top-bar{
+  margin-bottom: 24px;
+}
+
+.pd-back-btn{
+  background: none;
+  border: 1px solid var(--line-on-dark);
+  color: var(--cream);
+  padding: 10px 22px;
+  font-size: 0.85rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  font-family: inherit;
+}
+
+.pd-back-btn:hover{
+  background: var(--gold-light);
+  color: var(--ink);
+  border-color: var(--gold-light);
+  transform: translateX(-3px);
+}
+
+/* ---- Main layout ---- */
+.pd-layout{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-bottom: 60px;
+}
+
+@media (max-width: 800px){
+  .pd-layout{
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* ---- Gallery ---- */
+.pd-gallery{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pd-main-media{
+  position: relative;
+  background: var(--ink-soft);
+  border: 1px solid var(--line-gold-soft);
+  border-radius: 4px;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  max-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pd-main-media img,
+.pd-main-media video{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.pd-thumbs{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pd-thumb{
+  width: 72px;
+  height: 72px;
+  background: var(--ink-soft);
+  border: 2px solid transparent;
+  border-radius: 2px;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.pd-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-thumb.active{
+  border-color: var(--gold-bright);
+}
+
+.pd-thumb:hover{
+  border-color: var(--gold-light);
+}
+
+.pd-thumb-video{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-bright);
+  font-size: 1.4rem;
+  background: var(--ink-soft);
+}
+
+/* ---- Info side ---- */
+.pd-info{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pd-category{
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  margin: 0;
+  font-weight: 400;
+}
+
+.pd-name{
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: var(--cream);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.pd-price{
+  font-size: 1.3rem;
+  color: var(--gold-bright);
+  margin: 0;
+  font-weight: 400;
+}
+
+.pd-desc{
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--cream-muted);
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-gold-soft);
+  font-weight: 300;
+}
+
+/* ---- Action buttons ---- */
+.pd-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pd-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 26px;
+  font-size: 0.95rem;
+  border-radius: 2px;
+  border: 1px solid var(--gold-light);
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, box-shadow 0.25s;
+  font-weight: 400;
+}
+
+.pd-btn:hover{
+  background: var(--gold-light);
+  color: var(--ink);
+  box-shadow: 0 0 20px rgba(217,180,94,0.4);
+}
+
+.pd-btn-wa{
+  border-color: var(--gold-bright);
+  color: var(--cream);
+}
+
+.pd-btn-wish.active{
+  background: var(--gold-light);
+  color: var(--ink);
+  border-color: var(--gold-bright);
+}
+
+/* ---- Similar section ---- */
+.pd-similar-section{
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line-gold-soft);
+}
+
+.pd-similar-title{
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  margin: 0 0 24px;
+}
+
+.pd-similar-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px){
+  .pd-similar-grid{
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 700px){
+  .pd-similar-grid{
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+.pd-similar-card{
+  background: var(--ink-card);
+  border: 1px solid var(--line-gold-soft);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.2s;
+}
+
+.pd-similar-card:hover{
+  border-color: var(--gold-bright);
+  transform: translateY(-3px);
+}
+
+.pd-similar-media{
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--ink-soft);
+  overflow: hidden;
+}
+
+.pd-similar-media img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.pd-similar-card:hover .pd-similar-media img{
+  transform: scale(1.05);
+}
+
+.pd-similar-media .product-wish-btn{
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+  top: 8px;
+  right: 8px;
+}
+
+.pd-similar-info{
+  padding: 14px 16px 16px;
+}
+
+.pd-similar-cat{
+  font-size: 0.7rem;
+  color: var(--gold-bright);
+  margin: 0 0 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pd-similar-name{
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0 0 4px;
+  line-height: 1.25;
+  color: var(--cream);
+}
+
+.pd-similar-price{
+  font-size: 0.85rem;
+  color: var(--cream-muted);
+  margin: 0;
+}
+
+/* ---- Mobile tweaks ---- */
+@media (max-width: 480px){
+  .product-detail-page{
+    padding: 24px 16px 70px;
+  }
+  .pd-thumb{
+    width: 60px;
+    height: 60px;
+  }
+  .pd-main-media{
+    max-height: 400px;
+  }
+  .pd-btn{
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+  .pd-similar-title{
+    font-size: 1.3rem;
+  }
+           }
